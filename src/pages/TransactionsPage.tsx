@@ -1,10 +1,17 @@
-import { useState } from "react";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Modal from "../components/Modal";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import { useFinanceStore } from "../store/useFinanceStore";
-import type { Transaction } from "../types";
+import { useMemo, useState } from "react";
+import TransactionFiltersBar from "../components/TransactionFiltersBar";
+import { useDebounce } from "../hooks/useDebounce";
+import {
+  defaultFilters,
+  filterTransactions,
+  hasActiveFilters,
+} from "../utils/filterTransactions";
+import type { Transaction, TransactionFilters } from "../types";
 
 export default function TransactionsPage() {
   const transactions = useFinanceStore(s => s.transactions);
@@ -14,7 +21,14 @@ export default function TransactionsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const [filters, setFilters] = useState<TransactionFilters>(defaultFilters);
+  const debouncedSearch = useDebounce(filters.search, 300);
 
+  const filtered = useMemo(
+    () =>
+      filterTransactions(transactions, { ...filters, search: debouncedSearch }),
+    [transactions, filters, debouncedSearch],
+  );
   const openAdd = () => {
     setEditing(null);
     setIsFormOpen(true);
@@ -47,11 +61,22 @@ export default function TransactionsPage() {
         </button>
       </div>
 
+      <TransactionFiltersBar
+        filters={filters}
+        categories={categories}
+        onChange={setFilters}
+      />
+
+      <p className="mt-4 text-sm text-gray-500">
+        Showing {filtered.length} of {transactions.length} transactions
+      </p>
+
       <TransactionList
-        transactions={transactions}
+        transactions={filtered}
         categories={categories}
         onEdit={openEdit}
         onDelete={setDeleting}
+        isFiltered={hasActiveFilters(filters)}
       />
 
       <Modal
