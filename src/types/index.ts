@@ -21,3 +21,11 @@ export interface Budget {
   categoryId: string;
   limit: number;
 }
+
+export interface TransactionFilters {
+  search: string;
+  type: TransactionType | "all";
+  categoryId: string;
+  dateFrom: string;
+  dateTo: string;
+}
