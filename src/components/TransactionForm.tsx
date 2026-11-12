@@ -6,17 +6,27 @@ import {
 } from "../schemas/transactionSchema";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { today } from "../utils/format";
+import type { Transaction } from "../types";
 
 interface TransactionFormProps {
   onSuccess: () => void;
 }
-
+interface TransactionFormProps {
+  transaction?: Transaction;
+  onSuccess: () => void;
+}
 const inputClass =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500";
 
-export default function TransactionForm({ onSuccess }: TransactionFormProps) {
+export default function TransactionForm({
+  onSuccess,
+  transaction,
+}: TransactionFormProps) {
   const categories = useFinanceStore(s => s.categories);
   const addTransaction = useFinanceStore(s => s.addTransaction);
+  const updateTransaction = useFinanceStore(s => s.updateTransaction);
+
+  const isEditing = Boolean(transaction);
 
   const {
     register,
@@ -27,11 +37,12 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      title: "",
-      type: "expense",
-      categoryId: "",
-      date: today(),
-      note: "",
+      title: transaction?.title ?? "",
+      amount: transaction?.amount,
+      type: transaction?.type ?? "expense",
+      categoryId: transaction?.categoryId ?? "",
+      date: transaction?.date ?? today(),
+      note: transaction?.note ?? "",
     },
   });
 
@@ -39,10 +50,13 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
   const filteredCategories = categories.filter(c => c.type === type);
 
   const onSubmit = (values: TransactionFormValues) => {
-    addTransaction({
-      ...values,
-      note: values.note || undefined,
-    });
+    const data = { ...values, note: values.note || undefined };
+
+    if (transaction) {
+      updateTransaction(transaction.id, data);
+    } else {
+      addTransaction(data);
+    }
     onSuccess();
   };
 
@@ -142,7 +156,7 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
         disabled={isSubmitting}
         className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
       >
-        Add Transaction
+        {isEditing ? "Save Changes" : "Add Transaction"}
       </button>
     </form>
   );
