@@ -7,6 +7,7 @@ interface TransactionListProps {
   categories: Category[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
+  isFiltered?: boolean;
 }
 
 export default function TransactionList({
@@ -14,6 +15,7 @@ export default function TransactionList({
   categories,
   onEdit,
   onDelete,
+  isFiltered = false,
 }: TransactionListProps) {
   const categoryMap = useMemo(
     () => new Map(categories.map(c => [c.id, c])),
@@ -28,9 +30,13 @@ export default function TransactionList({
   if (sorted.length === 0) {
     return (
       <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-        <p className="font-medium text-gray-700">No transactions yet</p>
+        <p className="font-medium text-gray-700">
+          {isFiltered ? "No matching transactions" : "No transactions yet"}
+        </p>
         <p className="mt-1 text-sm text-gray-500">
-          Click "Add Transaction" to record your first one.
+          {isFiltered
+            ? "Try changing or clearing your filters."
+            : 'Click "Add Transaction" to record your first one.'}
         </p>
       </div>
     );
