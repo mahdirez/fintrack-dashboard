@@ -12,11 +12,14 @@ import {
   hasActiveFilters,
 } from "../utils/filterTransactions";
 import type { Transaction, TransactionFilters } from "../types";
+import { transactionsToCSV } from "../utils/csv";
+import { downloadFile } from "../utils/download";
+import { today } from "../utils/format";
 
 export default function TransactionsPage() {
-  const transactions = useFinanceStore(s => s.transactions);
-  const categories = useFinanceStore(s => s.categories);
-  const deleteTransaction = useFinanceStore(s => s.deleteTransaction);
+  const transactions = useFinanceStore((s) => s.transactions);
+  const categories = useFinanceStore((s) => s.categories);
+  const deleteTransaction = useFinanceStore((s) => s.deleteTransaction);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -49,16 +52,30 @@ export default function TransactionsPage() {
     setDeleting(null);
   };
 
+  const handleExport = () => {
+    const csv = transactionsToCSV(filtered, categories);
+    downloadFile(csv, `fintrack-transactions-${today()}.csv`, "text/csv");
+  };
+
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold">Transactions</h2>
-        <button
-          onClick={openAdd}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          + Add Transaction
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            disabled={filtered.length === 0}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={openAdd}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            + Add Transaction
+          </button>
+        </div>
       </div>
 
       <TransactionFiltersBar
