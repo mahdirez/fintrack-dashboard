@@ -1,18 +1,24 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import DashboardPage from "./pages/DashboardPage";
-import TransactionsPage from "./pages/TransactionsPage";
-import BudgetsPage from "./pages/BudgetsPage";
+
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const TransactionsPage = lazy(() => import("./pages/TransactionsPage"));
+const BudgetsPage = lazy(() => import("./pages/BudgetsPage"));
 
 function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="transactions" element={<TransactionsPage />} />
-        <Route path="budgets" element={<BudgetsPage />} />
-      </Route>
-    </Routes>
+    <Suspense
+      fallback={<p className="p-6 text-sm text-gray-500">Loading...</p>}
+    >
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="transactions" element={<TransactionsPage />} />
+          <Route path="budgets" element={<BudgetsPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 
