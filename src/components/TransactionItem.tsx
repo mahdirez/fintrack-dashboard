@@ -47,7 +47,7 @@ export default function TransactionItem({
         {formatCurrency(transaction.amount)}
       </p>
 
-      <div className="flex shrink-0 gap-1">
+      <div className="flex shrink-0 flex-col gap-0.5 sm:flex-row sm:gap-1">
         <button
           onClick={() => onEdit(transaction)}
           aria-label={`Edit ${transaction.title}`}
