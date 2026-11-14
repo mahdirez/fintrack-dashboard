@@ -1,10 +1,5 @@
 import { NavLink } from "react-router-dom";
-
-const links = [
-  { to: "/", label: "Dashboard" },
-  { to: "/transactions", label: "Transactions" },
-  { to: "/budgets", label: "Budgets" },
-];
+import { navLinks } from "./navLinks";
 
 export default function Sidebar() {
   return (
@@ -13,7 +8,7 @@ export default function Sidebar() {
         FinTrack
       </div>
       <nav className="flex flex-col gap-1 px-3">
-        {links.map(link => (
+        {navLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
