@@ -4,14 +4,30 @@ export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "fintrack-theme";
 
-function getInitialTheme(): Theme {
+function readSavedTheme(): Theme | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") return saved;
-  } catch {}
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+    return saved === "light" || saved === "dark" ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    return;
+  }
+}
+
+function getInitialTheme(): Theme {
+  return (
+    readSavedTheme() ??
+    (window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light")
+  );
 }
 
 export function useTheme() {
@@ -19,9 +35,7 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {}
+    saveTheme(theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
