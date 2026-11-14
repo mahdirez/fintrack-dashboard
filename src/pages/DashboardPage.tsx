@@ -8,11 +8,15 @@ import { calculateSummary } from "../utils/summary";
 import ExpensePieChart from "../components/ExpensePieChart";
 import MonthlyBarChart from "../components/MonthlyBarChart";
 import { getExpenseByCategory, getMonthlyTotals } from "../utils/chartData";
+import BudgetAlerts from "../components/BudgetAlerts";
+import { getBudgetProgress } from "../utils/budget";
 
 export default function DashboardPage() {
   const transactions = useFinanceStore((s) => s.transactions);
   const categories = useFinanceStore((s) => s.categories);
   const [range, setRange] = useState<RangeKey>("month");
+
+  const budgets = useFinanceStore((s) => s.budgets);
 
   const inRange = useMemo(
     () => filterByRange(transactions, range),
@@ -41,6 +45,11 @@ export default function DashboardPage() {
     [transactions],
   );
 
+  const budgetProgress = useMemo(
+    () => getBudgetProgress(budgets, categories, transactions),
+    [budgets, categories, transactions],
+  );
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -59,7 +68,7 @@ export default function DashboardPage() {
           ))}
         </select>
       </div>
-
+      <BudgetAlerts progress={budgetProgress} />
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <SummaryCard
           label="Income"
