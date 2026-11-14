@@ -1,1 +1,42 @@
+
 @import "tailwindcss";
+
+.dark {
+  color-scheme: dark;
+
+  /* Surface colors: gray-50 for page backgrounds and white for cards */
+  --color-gray-50: #0b1220;
+  --color-white: #111827;
+
+  /* Inverted gray scale for dark mode */
+  --color-gray-100: #1f2937;
+  --color-gray-200: #2d3748;
+  --color-gray-300: #4b5563;
+  --color-gray-400: #6b7280;
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #d1d5db;
+  --color-gray-700: #e5e7eb;
+  --color-gray-800: #f3f4f6;
+  --color-gray-900: #f9fafb;
+
+  /* Subtle tinted backgrounds for badges, active links, and alerts */
+  --color-indigo-50: #1e1b4b;
+  --color-indigo-100: #312e81;
+  --color-red-50: #2a1215;
+  --color-red-100: #450a0a;
+  --color-green-100: #052e16;
+  --color-yellow-50: #2a2108;
+  --color-yellow-100: #422006;
+
+  /* Lighter text colors for contrast against tinted backgrounds */
+  --color-red-700: #fca5a5;
+  --color-green-700: #86efac;
+  --color-yellow-800: #fde68a;
+  --color-yellow-900: #fef3c7;
+  --color-indigo-600: #818cf8;
+}
+
+/* Preserve white text on colored buttons since --color-white is remapped in dark mode */
+.dark .text-white {
+  color: #ffffff;
+}
