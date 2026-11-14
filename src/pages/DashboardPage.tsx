@@ -88,17 +88,6 @@ export default function DashboardPage() {
           <MonthlyBarChart data={monthly} />
         </section>
       </div>
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-2 text-lg font-semibold">Spending by category</h3>
-          <ExpensePieChart data={expenseByCategory} />
-        </section>
-
-        <section className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-2 text-lg font-semibold">Last 6 months</h3>
-          <MonthlyBarChart data={monthly} />
-        </section>
-      </div>
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Recent transactions</h3>
