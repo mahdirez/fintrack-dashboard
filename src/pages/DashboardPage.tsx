@@ -5,10 +5,13 @@ import { useFinanceStore } from "../store/useFinanceStore";
 import { filterByRange, rangeOptions, type RangeKey } from "../utils/dateRange";
 import { formatCurrency, formatDate } from "../utils/format";
 import { calculateSummary } from "../utils/summary";
+import ExpensePieChart from "../components/ExpensePieChart";
+import MonthlyBarChart from "../components/MonthlyBarChart";
+import { getExpenseByCategory, getMonthlyTotals } from "../utils/chartData";
 
 export default function DashboardPage() {
-  const transactions = useFinanceStore(s => s.transactions);
-  const categories = useFinanceStore(s => s.categories);
+  const transactions = useFinanceStore((s) => s.transactions);
+  const categories = useFinanceStore((s) => s.categories);
   const [range, setRange] = useState<RangeKey>("month");
 
   const inRange = useMemo(
@@ -19,13 +22,23 @@ export default function DashboardPage() {
   const summary = useMemo(() => calculateSummary(inRange), [inRange]);
 
   const categoryMap = useMemo(
-    () => new Map(categories.map(c => [c.id, c])),
+    () => new Map(categories.map((c) => [c.id, c])),
     [categories],
   );
 
   const recent = useMemo(
     () => [...inRange].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
     [inRange],
+  );
+
+  const expenseByCategory = useMemo(
+    () => getExpenseByCategory(inRange, categories),
+    [inRange, categories],
+  );
+
+  const monthly = useMemo(
+    () => getMonthlyTotals(transactions, 6),
+    [transactions],
   );
 
   return (
@@ -35,11 +48,11 @@ export default function DashboardPage() {
 
         <select
           value={range}
-          onChange={e => setRange(e.target.value as RangeKey)}
+          onChange={(e) => setRange(e.target.value as RangeKey)}
           aria-label="Date range"
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
         >
-          {rangeOptions.map(o => (
+          {rangeOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -64,7 +77,28 @@ export default function DashboardPage() {
           variant="balance"
         />
       </div>
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-xl bg-white p-5 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Spending by category</h3>
+          <ExpensePieChart data={expenseByCategory} />
+        </section>
 
+        <section className="rounded-xl bg-white p-5 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Last 6 months</h3>
+          <MonthlyBarChart data={monthly} />
+        </section>
+      </div>
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-xl bg-white p-5 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Spending by category</h3>
+          <ExpensePieChart data={expenseByCategory} />
+        </section>
+
+        <section className="rounded-xl bg-white p-5 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Last 6 months</h3>
+          <MonthlyBarChart data={monthly} />
+        </section>
+      </div>
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Recent transactions</h3>
@@ -82,7 +116,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <ul className="mt-4 divide-y divide-gray-100 rounded-xl bg-white shadow-sm">
-            {recent.map(t => {
+            {recent.map((t) => {
               const category = categoryMap.get(t.categoryId);
               const isIncome = t.type === "income";
               return (
