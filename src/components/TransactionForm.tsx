@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   transactionSchema,
@@ -22,16 +22,16 @@ export default function TransactionForm({
   onSuccess,
   transaction,
 }: TransactionFormProps) {
-  const categories = useFinanceStore(s => s.categories);
-  const addTransaction = useFinanceStore(s => s.addTransaction);
-  const updateTransaction = useFinanceStore(s => s.updateTransaction);
+  const categories = useFinanceStore((s) => s.categories);
+  const addTransaction = useFinanceStore((s) => s.addTransaction);
+  const updateTransaction = useFinanceStore((s) => s.updateTransaction);
 
   const isEditing = Boolean(transaction);
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormValues>({
@@ -46,8 +46,8 @@ export default function TransactionForm({
     },
   });
 
-  const type = watch("type");
-  const filteredCategories = categories.filter(c => c.type === type);
+  const type = useWatch({ control, name: "type" });
+  const filteredCategories = categories.filter((c) => c.type === type);
 
   const onSubmit = (values: TransactionFormValues) => {
     const data = { ...values, note: values.note || undefined };
@@ -64,7 +64,7 @@ export default function TransactionForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       {/* Type toggle */}
       <div className="grid grid-cols-2 gap-2">
-        {(["expense", "income"] as const).map(t => (
+        {(["expense", "income"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -118,7 +118,7 @@ export default function TransactionForm({
         <label className="mb-1 block text-sm font-medium">Category</label>
         <select {...register("categoryId")} className={inputClass}>
           <option value="">Select a category</option>
-          {filteredCategories.map(c => (
+          {filteredCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
