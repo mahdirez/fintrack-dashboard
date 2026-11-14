@@ -1,75 +1,84 @@
-# React + TypeScript + Vite
+# FinTrack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal finance dashboard built with React, TypeScript, Zustand and Recharts. Track income and expenses, categorize transactions, set monthly budgets, visualize spending and export your data to CSV.
 
-Currently, two official plugins are available:
+**Live demo:** https://fintrack-dashboard-pi-murex.vercel.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- Add, edit and delete transactions with form validation (React Hook Form + Zod)
+- Search and filter by type, category and date range
+- Dashboard with income, expense and balance summary
+- Donut chart (spending by category) and bar chart (last 6 months)
+- Monthly budgets per category with progress bars and alerts at 80% / 100%
+- CSV export of the filtered list (with formula-injection protection)
+- Dark mode with no flash on load
+- Responsive layout with a mobile navigation drawer
+- Data persisted in localStorage
+- Unit and component tests with Vitest and React Testing Library
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+| Area | Tools |
+| --- | --- |
+| Framework | React 18, TypeScript, Vite |
+| Styling | Tailwind CSS v4 |
+| State | Zustand (with persist middleware) |
+| Forms | React Hook Form, Zod |
+| Charts | Recharts |
+| Routing | React Router |
+| Testing | Vitest, React Testing Library |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Getting started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+git clone https://github.com/mahdirez/fintrack-dashboard.git
+cd fintrack-dashboard
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project structure
 
 ```
+src/
+├── components/   # Reusable UI components
+├── hooks/        # Custom hooks (useTheme, useDebounce)
+├── pages/        # Route-level pages
+├── schemas/      # Zod validation schemas
+├── store/        # Zustand store
+├── test/         # Test setup and factories
+├── types/        # Shared TypeScript types
+└── utils/        # Pure helpers (filters, budgets, CSV, charts)
+```
+
+## Design decisions
+
+- **Pure utilities:** all calculations (summary, budgets, filters, chart data, CSV) are pure functions, which makes them easy to test.
+- **Selective persistence:** only transactions and budgets are saved, so default categories can evolve without migrations.
+- **Theme via CSS variables:** dark mode overrides Tailwind color variables, so components don't need `dark:` variants.
+
+
+
+## Possible improvements
+
+- Custom categories
+- Recurring transactions
+- Multi-currency support
+- Import from CSV
+- Cloud sync
+
+## License
+
+MIT
