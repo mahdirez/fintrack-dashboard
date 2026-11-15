@@ -17,6 +17,7 @@ interface FinanceState {
 
   setBudget: (categoryId: string, limit: number) => void;
   removeBudget: (categoryId: string) => void;
+  resetAll: () => void;
 }
 
 export const useFinanceStore = create<FinanceState>()(
@@ -62,6 +63,7 @@ export const useFinanceStore = create<FinanceState>()(
         set((state) => ({
           budgets: state.budgets.filter((b) => b.categoryId !== categoryId),
         })),
+      resetAll: () => set({ transactions: [], budgets: [] }),
     }),
     {
       name: "fintrack-storage",
