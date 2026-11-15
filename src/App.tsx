@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const TransactionsPage = lazy(() => import("./pages/TransactionsPage"));
 const BudgetsPage = lazy(() => import("./pages/BudgetsPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="budgets" element={<BudgetsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </Suspense>
