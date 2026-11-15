@@ -1,4 +1,4 @@
-import ConfirmDialog from "../components/ConfirmDialog";
+import { useToastStore } from "../store/useToastStore";
 import Modal from "../components/Modal";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
@@ -20,10 +20,11 @@ export default function TransactionsPage() {
   const transactions = useFinanceStore((s) => s.transactions);
   const categories = useFinanceStore((s) => s.categories);
   const deleteTransaction = useFinanceStore((s) => s.deleteTransaction);
+  const restoreTransaction = useFinanceStore((s) => s.restoreTransaction);
+  const showToast = useToastStore((s) => s.showToast);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
-  const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>(defaultFilters);
   const debouncedSearch = useDebounce(filters.search, 300);
 
@@ -47,15 +48,21 @@ export default function TransactionsPage() {
     setEditing(null);
   };
 
-  const confirmDelete = () => {
-    if (deleting) deleteTransaction(deleting.id);
-    setDeleting(null);
-  };
-
   const handleExport = () => {
     const csv = transactionsToCSV(filtered, categories);
     downloadFile(csv, `fintrack-transactions-${today()}.csv`, "text/csv");
   };
+
+    const handleDelete = (transaction: Transaction) => {
+      const index = transactions.findIndex((t) => t.id === transaction.id);
+      deleteTransaction(transaction.id);
+
+      showToast({
+        message: `"${transaction.title}" deleted`,
+        actionLabel: "Undo",
+        onAction: () => restoreTransaction(transaction, index),
+      });
+    };
 
   return (
     <div>
@@ -92,7 +99,7 @@ export default function TransactionsPage() {
         transactions={filtered}
         categories={categories}
         onEdit={openEdit}
-        onDelete={setDeleting}
+        onDelete={handleDelete}
         isFiltered={hasActiveFilters(filters)}
       />
 
@@ -107,13 +114,7 @@ export default function TransactionsPage() {
         />
       </Modal>
 
-      <ConfirmDialog
-        open={deleting !== null}
-        title="Delete transaction"
-        message={`Are you sure you want to delete "${deleting?.title}"? This action cannot be undone.`}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleting(null)}
-      />
+   
     </div>
   );
 }
