@@ -84,3 +84,38 @@ describe("resetAll", () => {
     expect(after.categories).toEqual(defaultCategories);
   });
 });
+describe("restore actions", () => {
+  it("restores a deleted transaction at its original position", () => {
+    const { addTransaction } = useFinanceStore.getState();
+    addTransaction({ ...base, title: "A" });
+    addTransaction({ ...base, title: "B" });
+    addTransaction({ ...base, title: "C" }); 
+
+    const middle = useFinanceStore.getState().transactions[1];
+    useFinanceStore.getState().deleteTransaction(middle.id);
+    useFinanceStore.getState().restoreTransaction(middle, 1);
+
+    const titles = useFinanceStore.getState().transactions.map((t) => t.title);
+    expect(titles).toEqual(["C", "B", "A"]);
+  });
+
+  it("does not duplicate a transaction when restored twice", () => {
+    useFinanceStore.getState().addTransaction(base);
+    const [t] = useFinanceStore.getState().transactions;
+
+    useFinanceStore.getState().restoreTransaction(t, 0);
+    expect(useFinanceStore.getState().transactions).toHaveLength(1);
+  });
+
+  it("restores a removed budget", () => {
+    const { setBudget, removeBudget, restoreBudget } =
+      useFinanceStore.getState();
+    setBudget("food", 100);
+    removeBudget("food");
+    restoreBudget({ categoryId: "food", limit: 100 });
+
+    expect(useFinanceStore.getState().budgets).toEqual([
+      { categoryId: "food", limit: 100 },
+    ]);
+  });
+});
