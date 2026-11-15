@@ -69,3 +69,18 @@ describe("budgets", () => {
     expect(useFinanceStore.getState().budgets).toEqual([]);
   });
 });
+
+describe("resetAll", () => {
+  it("clears transactions and budgets but keeps categories", () => {
+    const state = useFinanceStore.getState();
+    state.addTransaction(base);
+    state.setBudget("food", 100);
+
+    useFinanceStore.getState().resetAll();
+
+    const after = useFinanceStore.getState();
+    expect(after.transactions).toEqual([]);
+    expect(after.budgets).toEqual([]);
+    expect(after.categories).toEqual(defaultCategories);
+  });
+});
