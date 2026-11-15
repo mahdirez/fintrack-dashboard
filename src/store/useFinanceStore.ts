@@ -18,6 +18,8 @@ interface FinanceState {
   setBudget: (categoryId: string, limit: number) => void;
   removeBudget: (categoryId: string) => void;
   resetAll: () => void;
+  restoreTransaction: (transaction: Transaction, index?: number) => void;
+  restoreBudget: (budget: Budget) => void;
 }
 
 export const useFinanceStore = create<FinanceState>()(
@@ -63,6 +65,21 @@ export const useFinanceStore = create<FinanceState>()(
         set((state) => ({
           budgets: state.budgets.filter((b) => b.categoryId !== categoryId),
         })),
+      restoreTransaction: (transaction, index = 0) =>
+        set((state) => {
+          if (state.transactions.some((t) => t.id === transaction.id))
+            return state;
+          const next = [...state.transactions];
+          next.splice(Math.min(index, next.length), 0, transaction);
+          return { transactions: next };
+        }),
+
+      restoreBudget: (budget) =>
+        set((state) =>
+          state.budgets.some((b) => b.categoryId === budget.categoryId)
+            ? state
+            : { budgets: [...state.budgets, budget] },
+        ),
       resetAll: () => set({ transactions: [], budgets: [] }),
     }),
     {
