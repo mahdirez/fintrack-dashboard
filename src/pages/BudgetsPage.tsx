@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import BudgetCard from "../components/BudgetCard";
 import BudgetForm from "../components/BudgetForm";
-import ConfirmDialog from "../components/ConfirmDialog";
+import { useToastStore } from "../store/useToastStore";
 import Modal from "../components/Modal";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { getBudgetProgress } from "../utils/budget";
@@ -11,10 +11,11 @@ export default function BudgetsPage() {
   const categories = useFinanceStore((s) => s.categories);
   const transactions = useFinanceStore((s) => s.transactions);
   const removeBudget = useFinanceStore((s) => s.removeBudget);
+  const restoreBudget = useFinanceStore((s) => s.restoreBudget);
+  const showToast = useToastStore((s) => s.showToast);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | undefined>();
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const progress = useMemo(
     () => getBudgetProgress(budgets, categories, transactions),
@@ -41,11 +42,19 @@ export default function BudgetsPage() {
     setEditingId(undefined);
   };
 
-  const removingName = categories.find((c) => c.id === removingId)?.name;
+  const handleRemove = (categoryId: string) => {
+    const budget = budgets.find((b) => b.categoryId === categoryId);
+    if (!budget) return;
 
-  const confirmRemove = () => {
-    if (removingId) removeBudget(removingId);
-    setRemovingId(null);
+    const name =
+      categories.find((c) => c.id === categoryId)?.name ?? "Category";
+    removeBudget(categoryId);
+
+    showToast({
+      message: `Budget for "${name}" removed`,
+      actionLabel: "Undo",
+      onAction: () => restoreBudget(budget),
+    });
   };
 
   return (
@@ -80,7 +89,7 @@ export default function BudgetsPage() {
               key={p.category.id}
               progress={p}
               onEdit={() => openEdit(p.category.id)}
-              onRemove={() => setRemovingId(p.category.id)}
+              onRemove={() => handleRemove(p.category.id)}
             />
           ))}
         </ul>
@@ -93,15 +102,6 @@ export default function BudgetsPage() {
       >
         <BudgetForm editingCategoryId={editingId} onSuccess={closeForm} />
       </Modal>
-
-      <ConfirmDialog
-        open={removingId !== null}
-        title="Remove budget"
-        message={`Remove the budget for "${removingName}"? Your transactions won't be affected.`}
-        confirmLabel="Remove"
-        onConfirm={confirmRemove}
-        onCancel={() => setRemovingId(null)}
-      />
     </div>
   );
 }
