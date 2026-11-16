@@ -6,6 +6,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const TransactionsPage = lazy(() => import("./pages/TransactionsPage"));
 const BudgetsPage = lazy(() => import("./pages/BudgetsPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="budgets" element={<BudgetsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
         </Route>
       </Routes>
     </Suspense>
