@@ -119,3 +119,87 @@ describe("restore actions", () => {
     ]);
   });
 });
+describe("categories", () => {
+  const custom = { name: "Gym", type: "expense" as const, color: "#14b8a6" };
+
+  it("adds a custom category with a generated id", () => {
+    useFinanceStore.getState().addCategory(custom);
+    const added = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym");
+    expect(added?.id).toBeTruthy();
+  });
+
+  it("updates name and color of a custom category", () => {
+    useFinanceStore.getState().addCategory(custom);
+    const { id } = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym")!;
+    useFinanceStore
+      .getState()
+      .updateCategory(id, { name: "Fitness", color: "#000000" });
+
+    const updated = useFinanceStore
+      .getState()
+      .categories.find((c) => c.id === id);
+    expect(updated).toMatchObject({
+      name: "Fitness",
+      color: "#000000",
+      type: "expense",
+    });
+  });
+
+  it("does not modify or delete default categories", () => {
+    useFinanceStore.getState().updateCategory("food", { name: "Hacked" });
+    useFinanceStore.getState().deleteCategory("food");
+
+    const food = useFinanceStore
+      .getState()
+      .categories.find((c) => c.id === "food");
+    expect(food?.name).toBe("Food");
+  });
+
+  it("deletes an unused category together with its budget", () => {
+    useFinanceStore.getState().addCategory(custom);
+    const { id } = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym")!;
+    useFinanceStore.getState().setBudget(id, 100);
+
+    useFinanceStore.getState().deleteCategory(id);
+
+    const state = useFinanceStore.getState();
+    expect(state.categories.some((c) => c.id === id)).toBe(false);
+    expect(state.budgets).toEqual([]);
+  });
+
+  it("refuses to delete a category that has transactions", () => {
+    useFinanceStore.getState().addCategory(custom);
+    const { id } = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym")!;
+    useFinanceStore.getState().addTransaction({ ...base, categoryId: id });
+
+    useFinanceStore.getState().deleteCategory(id);
+
+    expect(useFinanceStore.getState().categories.some((c) => c.id === id)).toBe(
+      true,
+    );
+  });
+
+  it("restores a deleted category only once", () => {
+    useFinanceStore.getState().addCategory(custom);
+    const category = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym")!;
+    useFinanceStore.getState().deleteCategory(category.id);
+
+    useFinanceStore.getState().restoreCategory(category);
+    useFinanceStore.getState().restoreCategory(category);
+
+    const matches = useFinanceStore
+      .getState()
+      .categories.filter((c) => c.id === category.id);
+    expect(matches).toHaveLength(1);
+  });
+});
