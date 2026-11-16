@@ -18,3 +18,5 @@ export const defaultCategories: Category[] = [
   { id: "shopping", name: "Shopping", type: "expense", color: "#eab308" },
   { id: "other", name: "Other", type: "expense", color: "#6b7280" },
 ];
+
+export const defaultCategoryIds = new Set(defaultCategories.map((c) => c.id));
