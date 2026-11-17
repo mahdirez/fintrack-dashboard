@@ -30,6 +30,8 @@ interface FinanceState {
   ) => void;
   deleteCategory: (id: string) => void;
   restoreCategory: (category: Category) => void;
+  addTransactions: (data: Omit<Transaction, "id">[]) => string[];
+  deleteTransactions: (ids: string[]) => void;
 }
 
 export const useFinanceStore = create<FinanceState>()(
@@ -58,6 +60,20 @@ export const useFinanceStore = create<FinanceState>()(
         set((state) => ({
           transactions: state.transactions.filter((t) => t.id !== id),
         })),
+
+      addTransactions: (data) => {
+        const created = data.map((d) => ({ id: crypto.randomUUID(), ...d }));
+        set((state) => ({ transactions: [...created, ...state.transactions] }));
+        return created.map((t) => t.id);
+      },
+
+      deleteTransactions: (ids) =>
+        set((state) => {
+          const toDelete = new Set(ids);
+          return {
+            transactions: state.transactions.filter((t) => !toDelete.has(t.id)),
+          };
+        }),
 
       setBudget: (categoryId, limit) =>
         set((state) => {
