@@ -15,6 +15,7 @@ import type { Transaction, TransactionFilters } from "../types";
 import { transactionsToCSV } from "../utils/csv";
 import { downloadFile } from "../utils/download";
 import { today } from "../utils/format";
+import ImportCsvDialog from "../components/ImportCsvDialog";
 
 export default function TransactionsPage() {
   const transactions = useFinanceStore((s) => s.transactions);
@@ -27,6 +28,7 @@ export default function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>(defaultFilters);
   const debouncedSearch = useDebounce(filters.search, 300);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -113,8 +115,13 @@ export default function TransactionsPage() {
           onSuccess={closeForm}
         />
       </Modal>
-
-   
+      <Modal
+        open={isImportOpen}
+        title="Import CSV"
+        onClose={() => setIsImportOpen(false)}
+      >
+        <ImportCsvDialog onClose={() => setIsImportOpen(false)} />
+      </Modal>
     </div>
   );
 }
