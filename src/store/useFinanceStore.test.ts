@@ -89,7 +89,7 @@ describe("restore actions", () => {
     const { addTransaction } = useFinanceStore.getState();
     addTransaction({ ...base, title: "A" });
     addTransaction({ ...base, title: "B" });
-    addTransaction({ ...base, title: "C" }); 
+    addTransaction({ ...base, title: "C" });
 
     const middle = useFinanceStore.getState().transactions[1];
     useFinanceStore.getState().deleteTransaction(middle.id);
@@ -201,5 +201,31 @@ describe("categories", () => {
       .getState()
       .categories.filter((c) => c.id === category.id);
     expect(matches).toHaveLength(1);
+  });
+});
+
+describe("bulk actions", () => {
+  it("adds many transactions and returns their ids", () => {
+    const ids = useFinanceStore.getState().addTransactions([
+      { ...base, title: "One" },
+      { ...base, title: "Two" },
+    ]);
+
+    const { transactions } = useFinanceStore.getState();
+    expect(ids).toHaveLength(2);
+    expect(transactions.map((t) => t.id)).toEqual(ids);
+  });
+
+  it("deletes only the given ids", () => {
+    useFinanceStore.getState().addTransaction({ ...base, title: "Keep" });
+    const ids = useFinanceStore.getState().addTransactions([
+      { ...base, title: "X" },
+      { ...base, title: "Y" },
+    ]);
+
+    useFinanceStore.getState().deleteTransactions(ids);
+
+    const titles = useFinanceStore.getState().transactions.map((t) => t.title);
+    expect(titles).toEqual(["Keep"]);
   });
 });
