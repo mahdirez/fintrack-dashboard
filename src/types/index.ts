@@ -15,6 +15,7 @@ export interface Transaction {
   categoryId: string;
   date: string;
   note?: string;
+  recurringId?: string;
 }
 
 export interface Budget {
@@ -28,4 +29,20 @@ export interface TransactionFilters {
   categoryId: string;
   dateFrom: string;
   dateTo: string;
+}
+
+export type Frequency = "weekly" | "monthly" | "yearly";
+
+export interface RecurringRule {
+  id: string;
+  title: string;
+  amount: number;
+  type: TransactionType;
+  categoryId: string;
+  note?: string;
+  frequency: Frequency;
+  startDate: string;
+  endDate?: string;
+  active: boolean;
+  occurrences: number;
 }
