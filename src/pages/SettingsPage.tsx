@@ -6,9 +6,11 @@ export default function SettingsPage() {
   const transactionsCount = useFinanceStore((s) => s.transactions.length);
   const budgetsCount = useFinanceStore((s) => s.budgets.length);
   const resetAll = useFinanceStore((s) => s.resetAll);
+  const rulesCount = useFinanceStore((s) => s.recurringRules.length);
+  const isEmpty =
+    transactionsCount === 0 && budgetsCount === 0 && rulesCount === 0;
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const isEmpty = transactionsCount === 0 && budgetsCount === 0;
 
   const handleReset = () => {
     resetAll();

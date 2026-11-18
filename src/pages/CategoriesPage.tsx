@@ -15,11 +15,17 @@ export default function CategoriesPage() {
   const restoreCategory = useFinanceStore((s) => s.restoreCategory);
   const restoreBudget = useFinanceStore((s) => s.restoreBudget);
   const showToast = useToastStore((s) => s.showToast);
+  const recurringRules = useFinanceStore((s) => s.recurringRules);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
   const usage = useMemo(() => getCategoryUsage(transactions), [transactions]);
+
+  const ruleCategoryIds = useMemo(
+    () => new Set(recurringRules.map((r) => r.categoryId)),
+    [recurringRules],
+  );
 
   const openAdd = () => {
     setEditing(null);
@@ -37,6 +43,8 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = (category: Category) => {
+    if ((usage.get(category.id) ?? 0) > 0 || ruleCategoryIds.has(category.id))
+      return;
     if ((usage.get(category.id) ?? 0) > 0) return;
     const budget = budgets.find((b) => b.categoryId === category.id);
 
@@ -86,6 +94,8 @@ export default function CategoriesPage() {
             {section.items.map((c) => {
               const count = usage.get(c.id) ?? 0;
               const isDefault = defaultCategoryIds.has(c.id);
+              const inRules = ruleCategoryIds.has(c.id);
+              const locked = count > 0 || inRules;
 
               return (
                 <li key={c.id} className="flex items-center gap-3 p-4">
@@ -116,11 +126,13 @@ export default function CategoriesPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(c)}
-                        disabled={count > 0}
+                        disabled={locked}
                         title={
                           count > 0
                             ? "Category is used by transactions"
-                            : undefined
+                            : inRules
+                              ? "Category is used by a recurring rule"
+                              : undefined
                         }
                         aria-label={`Delete ${c.name}`}
                         className="rounded-lg px-2 py-1 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-500"
