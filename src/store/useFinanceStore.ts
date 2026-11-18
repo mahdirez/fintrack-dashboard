@@ -1,10 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Budget, Category, Transaction } from "../types";
+import type { Budget, Category, Transaction, RecurringRule } from "../types";
 import {
   defaultCategories,
   defaultCategoryIds,
 } from "../utils/defaultCategories";
+import { today } from "../utils/format";
+import { countOccurrencesBefore, getDueOccurrences } from "../utils/recurring";
 
 interface FinanceState {
   transactions: Transaction[];
@@ -32,14 +34,33 @@ interface FinanceState {
   restoreCategory: (category: Category) => void;
   addTransactions: (data: Omit<Transaction, "id">[]) => string[];
   deleteTransactions: (ids: string[]) => void;
+  recurringRules: RecurringRule[];
+
+  addRecurringRule: (
+    data: Omit<RecurringRule, "id" | "active" | "occurrences">,
+  ) => void;
+  updateRecurringRule: (
+    id: string,
+    data: Partial<
+      Pick<
+        RecurringRule,
+        "title" | "amount" | "categoryId" | "note" | "endDate"
+      >
+    >,
+  ) => void;
+  toggleRecurringRule: (id: string) => void;
+  deleteRecurringRule: (id: string) => void;
+  restoreRecurringRule: (rule: RecurringRule) => void;
+  processRecurring: (todayISO?: string) => number;
 }
 
 export const useFinanceStore = create<FinanceState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       transactions: [],
       categories: defaultCategories,
       budgets: [],
+      recurringRules: [],
 
       addTransaction: (data) =>
         set((state) => ({
@@ -106,7 +127,8 @@ export const useFinanceStore = create<FinanceState>()(
             ? state
             : { budgets: [...state.budgets, budget] },
         ),
-      resetAll: () => set({ transactions: [], budgets: [] }),
+      resetAll: () =>
+        set({ transactions: [], budgets: [], recurringRules: [] }),
       addCategory: (data) =>
         set((state) => ({
           categories: [
@@ -127,9 +149,10 @@ export const useFinanceStore = create<FinanceState>()(
 
       deleteCategory: (id) =>
         set((state) => {
-          // پیش‌فرض‌ها و دسته‌های دارای تراکنش حذف نمی‌شن
           if (defaultCategoryIds.has(id)) return state;
           if (state.transactions.some((t) => t.categoryId === id)) return state;
+          if (state.recurringRules.some((r) => r.categoryId === id))
+            return state;
           return {
             categories: state.categories.filter((c) => c.id !== id),
             budgets: state.budgets.filter((b) => b.categoryId !== id),
@@ -142,6 +165,83 @@ export const useFinanceStore = create<FinanceState>()(
             ? state
             : { categories: [...state.categories, category] },
         ),
+      addRecurringRule: (data) => {
+        set((state) => ({
+          recurringRules: [
+            ...state.recurringRules,
+            { id: crypto.randomUUID(), active: true, occurrences: 0, ...data },
+          ],
+        }));
+        get().processRecurring();
+      },
+
+      updateRecurringRule: (id, data) =>
+        set((state) => ({
+          recurringRules: state.recurringRules.map((r) =>
+            r.id === id ? { ...r, ...data } : r,
+          ),
+        })),
+
+      toggleRecurringRule: (id) =>
+        set((state) => ({
+          recurringRules: state.recurringRules.map((r) => {
+            if (r.id !== id) return r;
+            if (r.active) return { ...r, active: false };
+            const skipTo = countOccurrencesBefore(
+              r.startDate,
+              r.frequency,
+              today(),
+            );
+            return {
+              ...r,
+              active: true,
+              occurrences: Math.max(r.occurrences, skipTo),
+            };
+          }),
+        })),
+
+      deleteRecurringRule: (id) =>
+        set((state) => ({
+          recurringRules: state.recurringRules.filter((r) => r.id !== id),
+        })),
+
+      restoreRecurringRule: (rule) =>
+        set((state) =>
+          state.recurringRules.some((r) => r.id === rule.id)
+            ? state
+            : { recurringRules: [...state.recurringRules, rule] },
+        ),
+
+      processRecurring: (todayISO = today()) => {
+        const created: Transaction[] = [];
+
+        const rules = get().recurringRules.map((rule) => {
+          const dates = getDueOccurrences(rule, todayISO);
+          if (dates.length === 0) return rule;
+
+          for (const date of dates) {
+            created.push({
+              id: crypto.randomUUID(),
+              title: rule.title,
+              amount: rule.amount,
+              type: rule.type,
+              categoryId: rule.categoryId,
+              note: rule.note,
+              date,
+              recurringId: rule.id,
+            });
+          }
+          return { ...rule, occurrences: rule.occurrences + dates.length };
+        });
+
+        if (created.length === 0) return 0;
+
+        set((state) => ({
+          recurringRules: rules,
+          transactions: [...created, ...state.transactions],
+        }));
+        return created.length;
+      },
     }),
     {
       name: "fintrack-storage",
@@ -153,6 +253,7 @@ export const useFinanceStore = create<FinanceState>()(
         customCategories: state.categories.filter(
           (c) => !defaultCategoryIds.has(c.id),
         ),
+        recurringRules: state.recurringRules,
       }),
 
       merge: (persisted, current) => {
@@ -160,11 +261,13 @@ export const useFinanceStore = create<FinanceState>()(
           transactions?: Transaction[];
           budgets?: Budget[];
           customCategories?: Category[];
+          recurringRules?: RecurringRule[];
         };
         return {
           ...current,
           transactions: p.transactions ?? current.transactions,
           budgets: p.budgets ?? current.budgets,
+          recurringRules: p.recurringRules ?? current.recurringRules,
           categories: [...defaultCategories, ...(p.customCategories ?? [])],
         };
       },
