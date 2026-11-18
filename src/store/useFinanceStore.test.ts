@@ -1,10 +1,14 @@
 import { useFinanceStore } from "./useFinanceStore";
 import { defaultCategories } from "../utils/defaultCategories";
+import { makeRule } from "../test/factories";
+import { today } from "../utils/format";
+import { countOccurrencesBefore } from "../utils/recurring";
 
 const initialState = {
   transactions: [],
   categories: defaultCategories,
   budgets: [],
+  recurringRules: [],
 };
 
 beforeEach(() => {
@@ -227,5 +231,96 @@ describe("bulk actions", () => {
 
     const titles = useFinanceStore.getState().transactions.map((t) => t.title);
     expect(titles).toEqual(["Keep"]);
+  });
+});
+
+describe("recurring rules", () => {
+  const ruleData = {
+    title: "Netflix",
+    amount: 10,
+    type: "expense" as const,
+    categoryId: "entertainment",
+    frequency: "monthly" as const,
+    startDate: "2026-09-15",
+  };
+
+  it("generates missed transactions once and advances the counter", () => {
+    useFinanceStore.setState({ recurringRules: [makeRule()] });
+
+    expect(useFinanceStore.getState().processRecurring("2026-11-18")).toBe(3);
+
+    const state = useFinanceStore.getState();
+    expect(state.transactions.map((t) => t.date).sort()).toEqual([
+      "2026-09-15",
+      "2026-10-15",
+      "2026-11-15",
+    ]);
+    expect(
+      state.transactions.every(
+        (t) => t.recurringId === state.recurringRules[0].id,
+      ),
+    ).toBe(true);
+    expect(state.recurringRules[0].occurrences).toBe(3);
+
+    expect(useFinanceStore.getState().processRecurring("2026-11-18")).toBe(0);
+    expect(useFinanceStore.getState().transactions).toHaveLength(3);
+  });
+
+  it("creates the first occurrence immediately when a rule starts today", () => {
+    useFinanceStore
+      .getState()
+      .addRecurringRule({ ...ruleData, startDate: today() });
+
+    const { transactions, recurringRules } = useFinanceStore.getState();
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0].date).toBe(today());
+    expect(recurringRules[0].occurrences).toBe(1);
+  });
+
+  it("skips paused rules and does not backfill the pause period on resume", () => {
+    useFinanceStore.setState({ recurringRules: [makeRule({ active: false })] });
+    expect(useFinanceStore.getState().processRecurring("2026-11-18")).toBe(0);
+
+    const rule = useFinanceStore.getState().recurringRules[0];
+    useFinanceStore.getState().toggleRecurringRule(rule.id);
+
+    const resumed = useFinanceStore.getState().recurringRules[0];
+    expect(resumed.active).toBe(true);
+    expect(resumed.occurrences).toBe(
+      countOccurrencesBefore(rule.startDate, rule.frequency, today()),
+    );
+  });
+
+  it("keeps generated transactions when a rule is deleted, and restores it once", () => {
+    useFinanceStore.setState({ recurringRules: [makeRule()] });
+    useFinanceStore.getState().processRecurring("2026-11-18");
+
+    const rule = useFinanceStore.getState().recurringRules[0];
+    useFinanceStore.getState().deleteRecurringRule(rule.id);
+
+    expect(useFinanceStore.getState().recurringRules).toEqual([]);
+    expect(useFinanceStore.getState().transactions).toHaveLength(3);
+
+    useFinanceStore.getState().restoreRecurringRule(rule);
+    useFinanceStore.getState().restoreRecurringRule(rule);
+    expect(useFinanceStore.getState().recurringRules).toHaveLength(1);
+  });
+
+  it("refuses to delete a category used by a rule", () => {
+    useFinanceStore
+      .getState()
+      .addCategory({ name: "Gym", type: "expense", color: "#14b8a6" });
+    const { id } = useFinanceStore
+      .getState()
+      .categories.find((c) => c.name === "Gym")!;
+    useFinanceStore.setState({
+      recurringRules: [makeRule({ categoryId: id })],
+    });
+
+    useFinanceStore.getState().deleteCategory(id);
+
+    expect(useFinanceStore.getState().categories.some((c) => c.id === id)).toBe(
+      true,
+    );
   });
 });
