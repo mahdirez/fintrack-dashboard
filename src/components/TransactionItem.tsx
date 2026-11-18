@@ -30,6 +30,11 @@ export default function TransactionItem({
         </p>
         <p className="text-xs text-gray-500">
           {category?.name ?? "Unknown"} · {formatDate(transaction.date)}
+          {transaction.recurringId && (
+            <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-600">
+              ↻ Recurring
+            </span>
+          )}
         </p>
         {transaction.note && (
           <p className="mt-1 truncate text-xs text-gray-400">
